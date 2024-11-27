@@ -1,4 +1,3 @@
-// components/StockChart.tsx
 'use client'; 
 
 import React, { useEffect, useState } from 'react';
@@ -9,13 +8,18 @@ interface StockChartProps {
   symbol: string;
 }
 
+interface ChartData {
+  date: string;  
+  price: number; 
+}
+
 const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ChartData[]>([]);
   
   useEffect(() => {
     const fetchData = async () => {
       const { timestamps, prices } = await getStockData(symbol);
-      const chartData = timestamps.map((date: string, index: number) => ({
+      const chartData: ChartData[] = timestamps.map((date: string, index: number) => ({
         date,
         price: prices[index]
       }));
