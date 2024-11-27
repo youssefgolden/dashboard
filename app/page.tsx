@@ -1,55 +1,69 @@
-// app/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import StockCard from '../components/StockCard';
-import StockChart from '../components/StockChart';
-import { getCurrentPrice } from '../lib/yahoofinance';
+import axios from 'axios';
 
-const HomePage: React.FC = () => {
-  const [prices, setPrices] = useState<{ [symbol: string]: { price: number, change: number } }>({
-    'ATO.PA': { price: 0, change: 0 },
-    'BNP.PA': { price: 0, change: 0 },
-  });
+type StockData = {
+  regularMarketPrice: number;
+  currency: string;
+  shortName: string;
+};
+
+const StockDisplay = () => {
+  const [stock, setStock] = useState<StockData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPrices = async () => {
+    const fetchStockData = async () => {
       try {
-        const atoPrice = await getCurrentPrice('ATO.PA');
-        const bnpPrice = await getCurrentPrice('BNP.PA');
+        const response = await axios.get(
+          'https://yahoo-finance166.p.rapidapi.com/api/market/get-quote',
+          {
+            headers: {
+              'x-rapidapi-host': 'yahoo-finance166.p.rapidapi.com',
+              'x-rapidapi-key': 'f1929fd61dmsh32fbc48c51c2f09p137829jsn22da5cc73b31',
+            },
+            params: { symbols: 'ATO.PA' },
+          }
+        );
 
-        // Assurez-vous que atoPrice et bnpPrice sont des nombres valides
-        if (typeof atoPrice === 'number' && typeof bnpPrice === 'number') {
-          // Simule un changement de pourcentage, ajustez selon vos besoins
-          setPrices({
-            'ATO.PA': { price: atoPrice, change: Math.random() * 10 - 5 },
-            'BNP.PA': { price: bnpPrice, change: Math.random() * 10 - 5 },
-          });
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des prix des actions:', error);
+        const result = response.data.quoteResponse.result[0];
+        setStock({
+          regularMarketPrice: result.regularMarketPrice,
+          currency: result.currency,
+          shortName: result.shortName,
+        });
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch stock data. Please try again later.');
       }
     };
 
-    fetchPrices();
+    fetchStockData();
+
+    const interval = setInterval(fetchStockData, 10000); // Met à jour toutes les 10 secondes
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div>
-      <h1>Dashboard des Actions en Bourse</h1>
-
-      <div className="stock-cards">
-        <StockCard symbol="ATO.PA" price={prices['ATO.PA'].price} change={prices['ATO.PA'].change} />
-        <StockCard symbol="BNP.PA" price={prices['BNP.PA'].price} change={prices['BNP.PA'].change} />
-      </div>
-
-      <div className="stock-charts">
-        <h2>Graphiques des Actions</h2>
-        <StockChart symbol="ATO.PA" />
-        <StockChart symbol="BNP.PA" />
+    <div className="min-h-screen flex items-center justify-center bg-white text-gray-800">
+      <div className="text-center p-6 shadow-lg rounded-md border border-gray-200 max-w-md">
+        <h1 className="text-2xl font-bold mb-4">Stock Price</h1>
+        {error ? (
+          <p className="text-red-500">{error}</p>
+        ) : stock ? (
+          <div>
+            <p className="text-lg font-medium">{stock.shortName}</p>
+            <p className="text-4xl font-bold">
+              {stock.regularMarketPrice} {stock.currency}
+            </p>
+          </div>
+        ) : (
+          <p>Loading...</p>
+        )}
       </div>
     </div>
   );
 };
 
-export default HomePage;
+export default StockDisplay;
