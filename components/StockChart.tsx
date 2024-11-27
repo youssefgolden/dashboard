@@ -1,4 +1,4 @@
-'use client'; 
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -8,22 +8,26 @@ interface StockChartProps {
   symbol: string;
 }
 
+// Définir un type pour les données du graphique
 interface ChartData {
-  date: string;  
-  price: number; 
+  date: string;
+  price: number;
 }
 
 const StockChart: React.FC<StockChartProps> = ({ symbol }) => {
-  const [data, setData] = useState<ChartData[]>([]);
+  const [data, setData] = useState<ChartData[]>([]); // Utilisation du type ChartData
   
   useEffect(() => {
     const fetchData = async () => {
       const { timestamps, prices } = await getStockData(symbol);
-      const chartData: ChartData[] = timestamps.map((date: string, index: number) => ({
+
+      // Map des données de l'API vers un format utilisé par recharts
+      const chartData: ChartData[] = timestamps.map((date, index) => ({
         date,
-        price: prices[index]
+        price: prices[index],
       }));
-      setData(chartData);
+      
+      setData(chartData); // Mettre à jour les données
     };
 
     fetchData();
